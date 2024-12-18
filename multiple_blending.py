@@ -5,6 +5,47 @@ import utils
 from seamless_cloning import PoissonSeamlessCloner
 import os
 
+def generate_contrail(contrail_unit_path, num_units=10, diminish_factor=0.8):
+    # Load the contrail unit image
+    contrail_unit = cv2.imread(contrail_unit_path, cv2.IMREAD_UNCHANGED)
+    h, w = contrail_unit.shape[:2]
+    
+    contrails = []
+    for i in range(num_units):
+        # Diminish size
+        scale = diminish_factor ** i
+        dim = (int(w * scale), int(h * scale))
+        resized = cv2.resize(contrail_unit, dim, interpolation=cv2.INTER_AREA)
+        
+        # Diminish opacity (for RGBA images)
+        if resized.shape[2] == 4:  # Check if it has an alpha channel
+            alpha = resized[:, :, 3] * (diminish_factor ** i)  # Reduce alpha
+            resized[:, :, 3] = np.clip(alpha, 0, 255).astype(np.uint8)
+        
+        contrails.append(resized)
+        print("resized.shape: ", resized.shape)
+        print("resized: ", resized)
+    
+    return contrails
+
+
+def add_contrails(result, contrails, start_point, step=(10, 0)):
+    x, y = start_point
+    for contrail in contrails:
+        h, w = contrail.shape[:2]
+
+        if y + h > result.shape[0] or x + w > result.shape[1]:
+            break
+
+        alpha = contrail[:, :, 3] / 255.0  
+        for c in range(3):
+            result[y:y+h, x:x+w, c] = (result[y:y+h, x:x+w, c] * (1 - alpha) +contrail[:, :, c] * alpha)
+        
+        x += step[0]
+        y += step[1]
+
+    return result
+
 def crop_image(input_image, crop_size, hop_size):
     h, w = input_image.shape[:2]
     crops = []
@@ -17,7 +58,7 @@ def crop_image(input_image, crop_size, hop_size):
             crops_idx.append((1000, 1000+crop_size[0], j, j+crop_size[1]))
     return crops, crops_idx
 
-def main(mask_path, source_image_path, target_image_path, output_dir, solver='spsolve', scale=1.0, gradient_mixing_mode='max', gradient_mixing_alpha=1.0):
+def main(mask_path, source_image_path, target_image_path, contrail_unit_image_path, output_dir, solver='spsolve', scale=1.0, gradient_mixing_mode='max', gradient_mixing_alpha=1.0):
     # Read input and source images
     mask = utils.read_image(mask_path, scale=1.0, gray=True)
     src_rgb = utils.read_image(source_image_path, scale=1.0, gray=False)
@@ -36,6 +77,8 @@ def main(mask_path, source_image_path, target_image_path, output_dir, solver='sp
         img = cloner.poisson_blend_rgb("max", 1.0)
         result = target_rgb.copy()
         result[crop_idx[idx][0]:crop_idx[idx][1], crop_idx[idx][2]:crop_idx[idx][3]] = img
+        start_point = (crop_idx[idx][2] + 100, crop_idx[idx][0] + 50)
+        result = add_contrails(result, contrails, start_point, step=(10, 0))
         result = (result * 255).astype(np.uint8)
         Image.fromarray(result).save(os.path.join(output_dir, "output_{}.png".format(idx)))
         print("Output image is saved as output_{}.png".format(idx))
@@ -45,6 +88,8 @@ if __name__ == "__main__":
     mask_path = "mask.jpg"
     source_image_path = "source.jpg"
     target_image_path = "target.jpg"
-    output_dir = "output"
+    output_dir = "output1"
+    contrail_unit_image_path = "unit_contrail.png"
+    # print("Contrails: ", len(contrails))
     
-    main(mask_path, source_image_path, target_image_path, output_dir)
+    main(mask_path, source_image_path, target_image_path, contrail_unit_image_path, output_dir)
