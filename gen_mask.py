@@ -83,8 +83,9 @@ def generate_mask(image_path):
     plt.show()
 
     # Optionally, save the mask
-    cv2.imwrite('generated_mask.png', mask)
+    cv2.imwrite('generated_mask.png', final_mask)
 
 # Path to your input image
 image_path = 'source.jpg'  # Replace with your image path
+# image_path = 'rotated_image.jpg'  # Replace with your image path
 generate_mask(image_path)
