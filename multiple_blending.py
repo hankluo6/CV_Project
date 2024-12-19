@@ -18,20 +18,17 @@ def crop_image(input_image, crop_size, hop_size_x, y):
     return crops, crops_idx
 
 def main(mask_path, source_image_path, target_image_path, output_dir, solver='spsolve', scale=1.0, gradient_mixing_mode='max', gradient_mixing_alpha=1.0):
-    # Read input and source images
     mask = utils.read_image(mask_path, scale=1.0, gray=True)
     src_rgb = utils.read_image(source_image_path, scale=1.0, gray=False)
     target_rgb = utils.read_image(target_image_path, scale=1.0,  gray=False)
     
-    # Get the size of the source image
-    source_size = src_rgb.shape[:2]
+    src_size = src_rgb.shape[:2]
     
     # Crop the input image
     cropped_images, crop_idx = crop_image(target_rgb, source_size, 40, 1000)
     # Process each cropped image
     # back_ground = cv2.imread(target_image_path)
     for idx, target_image in enumerate(cropped_images):
-        # Create a Poisson seamless cloner
         cloner = PoissonSeamlessCloner(mask, src_rgb, target_image, solver, 1.0)
         img = cloner.poisson_blend_rgb("max", 1.0)
         result = target_rgb.copy()
