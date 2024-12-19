@@ -50,7 +50,6 @@ def main(
     gradient_mixing_mode="max",
     gradient_mixing_alpha=1.0,
 ):
-    # Read input and source images
     # mask = utils.read_image(mask_path, scale=1.0, gray=True)
     # src_rgb = utils.read_image(source_image_path, scale=1.0, gray=False)
     src_imgs = load_gif(source_image_path)
@@ -67,20 +66,15 @@ def main(
 
     # Crop the input image
     cropped_images, crop_idx = crop_image(target_rgb, source_size, 3, 600)
-    # Process each cropped image
-    # back_ground = cv2.imread(target_image_path)
+
     for idx, target_image in enumerate(cropped_images):
-        # Create a Poisson seamless cloner
         gif_idx = idx % gif_length
         mask, src_rgb = masks[gif_idx], src_imgs[gif_idx]
         
+        # Create a Poisson seamless cloner
         cloner = PoissonSeamlessCloner(mask, src_rgb, target_image, solver, 1.0)
         img = cloner.poisson_blend_rgb(gradient_mixing_mode, gradient_mixing_alpha)
         img_save = (img * 255).astype(np.uint8)
-
-        # Image.fromarray(img_save).save(
-        #     os.path.join('imgs/', "output_{}.png".format(idx))
-        # )
 
         result = target_rgb.copy()
         result[

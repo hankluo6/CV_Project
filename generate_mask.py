@@ -15,7 +15,7 @@ def generate_mask(image_path, plot=False):
     cv2.drawContours(mask, contours, -1, color=255, thickness=cv2.FILLED)
 
     # kernel = np.ones((5, 5), np.uint8)
-    kernel = np.ones((7, 7), np.uint8)  # Larger kernel to close gaps
+    kernel = np.ones((7, 7), np.uint8) 
     mask_closed = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
     # Flood fill to fill inner holes
