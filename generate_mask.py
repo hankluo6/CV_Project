@@ -52,7 +52,7 @@ def generate_mask(image_path, plot=False):
     plt.tight_layout()
     plt.show()
 
-    cv2.imwrite('mask.jpg', mask_final)
+    cv2.imwrite('mask.png', mask_final)
 
 image_path = 'source.jpg'
 generate_mask(image_path, plot=True)
